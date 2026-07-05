@@ -8,6 +8,7 @@ set(CMAKE_CXX_STANDARD_REQUIRED ON)
 add_executable(p2p-chat
     src/main.cpp
     src/parser.cpp
+    src/network.cpp
 )
 
 target_include_directories(p2p-chat PRIVATE src)
