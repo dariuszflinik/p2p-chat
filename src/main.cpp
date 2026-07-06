@@ -1,3 +1,4 @@
+#include "chat.hpp"
 #include "parser.hpp"
 #include "network.hpp"
 
@@ -22,7 +23,7 @@ int main(int argc, char** argv) {
 
             close_fd(listener_fd);
 
-            std::cout << "Connected, test successful.\n";
+            std::cout << "Peer connected.\n";
         } else {
             std::cout << "Connecting to "
                       << config->host
@@ -32,11 +33,10 @@ int main(int argc, char** argv) {
 
             peer_fd = connect_to_peer(config->host, config->port);
 
-            std::cout << "Connected, test successful.\n";
+            std::cout << "Connected.\n";
         }
 
-        close_fd(peer_fd);
-        std::cout << "Socket closed.\n";
+        run_chat(peer_fd, config->username);
 
     } catch (const std::exception& e) {
         std::cerr << "Error: " << e.what() << "\n";

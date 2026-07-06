@@ -9,6 +9,7 @@ add_executable(p2p-chat
     src/main.cpp
     src/parser.cpp
     src/network.cpp
+    src/chat.cpp
 )
 
 target_include_directories(p2p-chat PRIVATE src)
