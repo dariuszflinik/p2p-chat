@@ -16,5 +16,16 @@ struct AppConfig {
     std::uint16_t port{};
 };
 
-std::optional<AppConfig> parse_arguments(int argc, char** argv);
+enum class ParseStatus {
+    Ok,
+    Help,
+    Error
+};
+
+struct ParseResult {
+    ParseStatus status;
+    std::optional<AppConfig> config;
+};
+
+ParseResult parse_arguments(int argc, char** argv);
 void print_usage(const char* program_name);
