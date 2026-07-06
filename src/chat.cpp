@@ -14,6 +14,8 @@
 
 namespace {
 
+constexpr const char* quit_command = "/quit";
+
 bool send_all(int socket_fd, const std::string& data) {
     std::size_t total_sent = 0;
 
@@ -35,14 +37,20 @@ bool send_all(int socket_fd, const std::string& data) {
     return true;
 }
 
+void print_prompt() {
+    std::cout << "> " << std::flush;
+}
+
 void handle_received_line(const std::string& line) {
     const auto message = parse_message(line);
 
     if (message.has_value()) {
-        std::cout << "\n[" << message->sender << "] " << message->text << "\n> " << std::flush;
+        std::cout << "\n[" << message->sender << "] " << message->text << "\n";
     } else {
-        std::cout << "\n[invalid message] " << line << "\n> " << std::flush;
+        std::cout << "\n[invalid message] " << line << "\n";
     }
+
+    print_prompt();
 }
 
 void receive_loop(int socket_fd, std::atomic_bool& running) {
@@ -64,12 +72,17 @@ void receive_loop(int socket_fd, std::atomic_bool& running) {
                 handle_received_line(line);
             }
         } else if (received == 0) {
-            std::cout << "\nPeer disconnected.\n";
+            if (running) {
+                std::cout << "\nPeer disconnected.\n";
+                print_prompt();
+            }
+
             running = false;
             break;
         } else {
             if (running) {
                 std::cerr << "\nrecv() failed: " << std::strerror(errno) << "\n";
+                print_prompt();
             }
 
             running = false;
@@ -85,14 +98,20 @@ void run_chat(int socket_fd, const std::string& username) {
 
     std::thread receiver(receive_loop, socket_fd, std::ref(running));
 
-    std::cout << "Chat started. Type messages and press Enter.\n";
-    std::cout << "> " << std::flush;
+    std::cout << "Chat started. Type /quit to exit.\n";
+    print_prompt();
 
     std::string message;
 
     while (running && std::getline(std::cin, message)) {
+        if (message == quit_command) {
+            const std::string leave_message = serialize_message(username, "left the chat");
+            send_all(socket_fd, leave_message);
+            break;
+        }
+
         if (message.empty()) {
-            std::cout << "> " << std::flush;
+            print_prompt();
             continue;
         }
 
@@ -104,7 +123,7 @@ void run_chat(int socket_fd, const std::string& username) {
             break;
         }
 
-        std::cout << "> " << std::flush;
+        print_prompt();
     }
 
     running = false;
@@ -116,4 +135,6 @@ void run_chat(int socket_fd, const std::string& username) {
     }
 
     close_fd(socket_fd);
+
+    std::cout << "Chat closed.\n";
 }
